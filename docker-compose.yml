@@ -1,0 +1,9 @@
+version: '3.9'
+
+services:
+  api:
+    container_name: user_auth.api
+    build:
+      context: .
+    ports:
+    - "127.0.0.1:8080:8080"

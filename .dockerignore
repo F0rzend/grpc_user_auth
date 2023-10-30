@@ -1,0 +1,15 @@
+# Docker
+.dockerignore
+Dockerfile
+
+# Jetbrains IDEA
+.idea
+
+# Git and GitHub
+.git
+.gitignore
+LICENSE
+README.md
+
+# project
+tests
