@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package users;
+
+option go_package = "github.com/F0rzend/grpc_user_auth/proto";
+
+import "google/protobuf/empty.proto";
+
+service UserService {
+  rpc CreateUser(CreateUserRequest) returns (google.protobuf.Empty) {}
+  rpc GetAllUsers(google.protobuf.Empty) returns (GetAllUsersResponse) {}
+  rpc GetUserByID(GetUserRequest) returns (GetUserResponse) {}
+  rpc UpdateUser(UpdateUserRequest) returns (google.protobuf.Empty) {}
+  rpc DeleteUser(DeleteUserRequest) returns (google.protobuf.Empty) {}
+}
+
+message CreateUserRequest {
+  string id = 1;
+  string email = 2;
+  string username = 3;
+  string password = 4;
+  bool admin = 5;
+}
+
+message GetAllUsersResponse {
+  repeated User users = 1;
+}
+
+message GetUserRequest {
+  string id = 1;
+}
+
+message GetUserResponse {
+  User user = 1;
+}
+
+message User {
+  string id = 1;
+  string email = 2;
+  string username = 3;
+  bool admin = 4;
+}
+
+message UpdateUserRequest {
+  string id = 1;
+  string email = 2;
+  string username = 3;
+  string password = 4;
+  bool admin = 5;
+}
+
+message DeleteUserRequest {
+  string id = 1;
+}

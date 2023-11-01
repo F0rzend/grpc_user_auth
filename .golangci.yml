@@ -106,6 +106,13 @@ linters-settings:
     # Regexp pattern to skip files.
     skip-regexp: tests?\/.*\.go
 
+  wrapcheck:
+    ignoreSigs:
+    - status.Error(
+    - status.Errorf(
+
+    - .Errorf(
+
 issues:
   exclude-rules:
     # Exclude some linters from running on tests files.

@@ -13,3 +13,10 @@ run: ## Run application in docker
 .PHONY: pre-commit
 pre-commit: ## Run linters and formatters via pre-commit
 	@pre-commit run --all-files
+
+.PHONY: gen-proto
+gen-proto: ## Generate protobuf files
+	@protoc \
+		--go_opt=paths=source_relative --go_out=. \
+		--go-grpc_opt=paths=source_relative --go-grpc_out=. \
+		proto/*.proto
