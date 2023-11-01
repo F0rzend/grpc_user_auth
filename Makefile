@@ -14,9 +14,21 @@ run: ## Run application in docker
 pre-commit: ## Run linters and formatters via pre-commit
 	@pre-commit run --all-files
 
+##@ Protobuf
+
 .PHONY: gen-proto
 gen-proto: ## Generate protobuf files
 	@protoc \
 		--go_opt=paths=source_relative --go_out=. \
 		--go-grpc_opt=paths=source_relative --go-grpc_out=. \
 		proto/*.proto
+
+##@ Tests
+
+.PHONY: test-e2e
+test-e2e: ## Run e2e tests
+	@go test -v ./tests/...
+
+.PHONY: test-unit
+test-unit: ## Run unit tests
+	@go test -v ./internal/...
