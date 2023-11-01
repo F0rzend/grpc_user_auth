@@ -113,3 +113,17 @@ func (a *Application) DeleteUser(id uuid.UUID) error {
 
 	return nil
 }
+
+func (a *Application) AuthenticateUser(username string, rawPassword string) (*models.User, error) {
+	user, err := a.repo.GetByUsername(username)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user by username %q: %w", username, err)
+	}
+
+	err = bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(rawPassword))
+	if err != nil {
+		return nil, fmt.Errorf("failed to compare password hash: %w", err)
+	}
+
+	return user, nil
+}

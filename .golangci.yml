@@ -50,6 +50,7 @@ linters:
 
   disable:
   - depguard    # Go linter that checks if package imports are in a list of acceptable packages.
+  - dupl    # Go linter that checks for duplicated code.
   - exhaustruct    # Go linter that checks if all struct fields are initialized.
   - goerr113    # Go linter to check the errors handling expressions.
   - varnamelen    # Checks that the length of a variable's name matches its scope

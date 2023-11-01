@@ -107,6 +107,33 @@ func TestMemoryRepository_Delete(t *testing.T) {
 	})
 }
 
+func TestMemoryRepository_GetByUsername(t *testing.T) {
+	t.Parallel()
+
+	sut := infrastructure.NewMemoryRepository()
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+
+		testUser := createTestUser(t)
+		err := sut.Save(testUser)
+		require.NoError(t, err)
+
+		user, err := sut.GetByUsername(testUser.Username)
+		assert.NoError(t, err)
+		assert.Equal(t, testUser, user)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+
+		user, err := sut.GetByUsername("not_found")
+
+		assertErrorFlag(t, err, common.FlagNotFound)
+		assert.Nil(t, user)
+	})
+}
+
 func createTestUser(t *testing.T) *models.User {
 	t.Helper()
 

@@ -15,7 +15,9 @@ type MemoryRepository struct {
 }
 
 func NewMemoryRepository() *MemoryRepository {
-	return &MemoryRepository{}
+	return &MemoryRepository{
+		users: sync.Map{},
+	}
 }
 
 func (r *MemoryRepository) Save(user *models.User) error {
@@ -35,6 +37,31 @@ func (r *MemoryRepository) GetByID(id uuid.UUID) (*models.User, error) {
 	}
 
 	return nil, common.FlagError(fmt.Errorf("user with id %q not found", id), common.FlagNotFound)
+}
+
+func (r *MemoryRepository) GetByUsername(username string) (*models.User, error) {
+	var found *models.User
+
+	r.users.Range(func(key, value interface{}) bool {
+		user, ok := value.(*models.User)
+		if !ok {
+			return false
+		}
+
+		if user.Username == username {
+			found = user
+
+			return false
+		}
+
+		return true
+	})
+
+	if found == nil {
+		return nil, common.FlagError(fmt.Errorf("user with username %q not found", username), common.FlagNotFound)
+	}
+
+	return found, nil
 }
 
 func (r *MemoryRepository) GetAll() ([]*models.User, error) {

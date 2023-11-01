@@ -2,16 +2,22 @@ package transport
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
+	"log/slog"
 	"net/mail"
+	"strings"
 
 	"github.com/google/uuid"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/F0rzend/grpc_user_auth/internal/application"
 	"github.com/F0rzend/grpc_user_auth/internal/common"
+	"github.com/F0rzend/grpc_user_auth/internal/models"
 	"github.com/F0rzend/grpc_user_auth/proto"
 )
 
@@ -33,7 +39,12 @@ func NewGRPCHandlers(app *application.Application) *GRPCHandlers {
 
 var empty = new(emptypb.Empty) //nolint:gochecknoglobals
 
-func (h *GRPCHandlers) CreateUser(_ context.Context, request *proto.CreateUserRequest) (*emptypb.Empty, error) {
+func (h *GRPCHandlers) CreateUser(ctx context.Context, request *proto.CreateUserRequest) (*emptypb.Empty, error) {
+	err := h.AdminOnly(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	parsedUUID, err := uuid.Parse(request.Id)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Invalid UUID")
@@ -82,7 +93,12 @@ func (h *GRPCHandlers) GetAllUsers(_ context.Context, _ *emptypb.Empty) (*proto.
 	return response, nil
 }
 
-func (h *GRPCHandlers) GetUserByID(_ context.Context, request *proto.GetUserRequest) (*proto.GetUserResponse, error) {
+func (h *GRPCHandlers) GetUserByID(ctx context.Context, request *proto.GetUserRequest) (*proto.GetUserResponse, error) {
+	err := h.AdminOnly(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	parsedUUID, err := uuid.Parse(request.Id)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Invalid UUID")
@@ -108,7 +124,12 @@ func (h *GRPCHandlers) GetUserByID(_ context.Context, request *proto.GetUserRequ
 	return response, nil
 }
 
-func (h *GRPCHandlers) UpdateUser(_ context.Context, request *proto.UpdateUserRequest) (*emptypb.Empty, error) {
+func (h *GRPCHandlers) UpdateUser(ctx context.Context, request *proto.UpdateUserRequest) (*emptypb.Empty, error) {
+	err := h.AdminOnly(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	parsedUUID, err := uuid.Parse(request.Id)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Invalid UUID")
@@ -136,7 +157,12 @@ func (h *GRPCHandlers) UpdateUser(_ context.Context, request *proto.UpdateUserRe
 	return empty, nil
 }
 
-func (h *GRPCHandlers) DeleteUser(_ context.Context, request *proto.DeleteUserRequest) (*emptypb.Empty, error) {
+func (h *GRPCHandlers) DeleteUser(ctx context.Context, request *proto.DeleteUserRequest) (*emptypb.Empty, error) {
+	err := h.AdminOnly(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	parsedUUID, err := uuid.Parse(request.Id)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Invalid UUID")
@@ -151,4 +177,80 @@ func (h *GRPCHandlers) DeleteUser(_ context.Context, request *proto.DeleteUserRe
 	}
 
 	return empty, nil
+}
+
+type authContextKey struct{}
+
+func (h *GRPCHandlers) BasicAuthUnaryInterceptor(
+	ctx context.Context,
+	req any,
+	_ *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler,
+) (any, error) {
+	const expectedSchema = "Basic"
+	const authorizationHeaderKey = "authorization"
+	const credentialsNumber = 2
+
+	logger := common.ExtractLogger(ctx)
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "Missing metadata")
+	}
+
+	authHeader, ok := md[authorizationHeaderKey]
+	if !ok || len(authHeader) != 1 {
+		return nil, status.Error(codes.Unauthenticated, "Missing authorization token")
+	}
+
+	components := strings.Split(authHeader[0], " ")
+	schema, token := components[0], components[1]
+
+	if schema != expectedSchema {
+		return nil, status.Error(codes.Unauthenticated, "Invalid authorization schema")
+	}
+
+	decoded, err := base64.StdEncoding.DecodeString(token)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "Invalid authorization token")
+	}
+
+	credentials := strings.SplitN(string(decoded), ":", credentialsNumber)
+	username, password := credentials[0], credentials[1]
+
+	user, err := h.app.AuthenticateUser(username, password)
+	if common.IsFlaggedError(err, common.FlagNotFound) {
+		return nil, status.Error(codes.Unauthenticated, "Invalid credentials")
+	}
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to authenticate user", slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.Internal, "Failed to authenticate user")
+	}
+
+	ctx = context.WithValue(ctx, authContextKey{}, user)
+
+	return handler(ctx, req)
+}
+
+func (h *GRPCHandlers) GetAuthenticatedUser(ctx context.Context) (*models.User, error) {
+	user, ok := ctx.Value(authContextKey{}).(*models.User)
+	if !ok {
+		return nil, status.Error(codes.Internal, "Failed to get authenticated user")
+	}
+
+	return user, nil
+}
+
+func (h *GRPCHandlers) AdminOnly(ctx context.Context) error {
+	user, err := h.GetAuthenticatedUser(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get authenticated user: %w", err)
+	}
+
+	if !user.Admin {
+		return status.Error(codes.PermissionDenied, "Only admins can perform this action")
+	}
+
+	return nil
 }
