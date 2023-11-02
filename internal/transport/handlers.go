@@ -39,15 +39,13 @@ func NewGRPCHandlers(app *application.Application) *GRPCHandlers {
 
 var empty = new(emptypb.Empty) //nolint:gochecknoglobals
 
-func (h *GRPCHandlers) CreateUser(ctx context.Context, request *proto.CreateUserRequest) (*emptypb.Empty, error) {
+func (h *GRPCHandlers) CreateUser(
+	ctx context.Context,
+	request *proto.CreateUserRequest,
+) (*proto.CreateUserResponse, error) {
 	err := h.AdminOnly(ctx)
 	if err != nil {
 		return nil, err
-	}
-
-	parsedUUID, err := uuid.Parse(request.Id)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "Invalid UUID")
 	}
 
 	_, err = mail.ParseAddress(request.Email)
@@ -55,8 +53,7 @@ func (h *GRPCHandlers) CreateUser(ctx context.Context, request *proto.CreateUser
 		return nil, status.Error(codes.InvalidArgument, "Invalid email")
 	}
 
-	err = h.app.CreateUser(
-		parsedUUID,
+	id, err := h.app.CreateUser(
 		request.Username,
 		request.Email,
 		request.Password,
@@ -69,7 +66,9 @@ func (h *GRPCHandlers) CreateUser(ctx context.Context, request *proto.CreateUser
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	return empty, nil
+	return &proto.CreateUserResponse{
+		Id: id.String(),
+	}, nil
 }
 
 func (h *GRPCHandlers) GetAllUsers(_ context.Context, _ *emptypb.Empty) (*proto.GetAllUsersResponse, error) {

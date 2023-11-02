@@ -9,8 +9,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/google/uuid"
-
 	"github.com/F0rzend/grpc_user_auth/internal/application"
 	"github.com/F0rzend/grpc_user_auth/internal/common"
 	"github.com/F0rzend/grpc_user_auth/internal/infrastructure"
@@ -67,8 +65,7 @@ func createAdmin(app *application.Application) error {
 		return fmt.Errorf("admin username, email and password must be set")
 	}
 
-	err := app.CreateUser(
-		uuid.New(),
+	_, err := app.CreateUser(
 		adminUsername,
 		adminEmail,
 		adminPassword,

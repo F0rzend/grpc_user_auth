@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -90,13 +89,11 @@ func TestAdminWorkflow(t *testing.T) {
 	assert.NotEmpty(t, getAllUsersResponse.Users)
 
 	user := struct {
-		id       string
 		email    string
 		username string
 		password string
 		admin    bool
 	}{
-		id:       uuid.New().String(),
 		email:    "email@email.com",
 		username: "username",
 		password: "password",
@@ -104,21 +101,22 @@ func TestAdminWorkflow(t *testing.T) {
 	}
 
 	createUserResponse, err := client.CreateUser(ctx, &proto.CreateUserRequest{
-		Id:       user.id,
 		Email:    user.email,
 		Username: user.username,
 		Password: user.password,
 		Admin:    user.admin,
 	})
 	assert.NoError(t, err)
-	assert.Equal(t, empty, createUserResponse)
+	assert.NotNil(t, createUserResponse)
+
+	createdUserID := createUserResponse.Id
 
 	getUserByIDResponse, err := client.GetUserByID(ctx, &proto.GetUserRequest{
-		Id: user.id,
+		Id: createdUserID,
 	})
 
 	assert.NoError(t, err)
-	assert.Equal(t, user.id, getUserByIDResponse.User.Id)
+	assert.Equal(t, createdUserID, getUserByIDResponse.User.Id)
 	assert.Equal(t, user.email, getUserByIDResponse.User.Email)
 	assert.Equal(t, user.username, getUserByIDResponse.User.Username)
 	assert.Equal(t, user.admin, getUserByIDResponse.User.Admin)
@@ -126,7 +124,7 @@ func TestAdminWorkflow(t *testing.T) {
 	newUsername := "newUsername"
 
 	updateUserResponse, err := client.UpdateUser(ctx, &proto.UpdateUserRequest{
-		Id:       user.id,
+		Id:       createdUserID,
 		Email:    user.email,
 		Username: newUsername,
 		Password: user.password,
@@ -136,19 +134,19 @@ func TestAdminWorkflow(t *testing.T) {
 	assert.Equal(t, empty, updateUserResponse)
 
 	getUserByIDResponse, err = client.GetUserByID(ctx, &proto.GetUserRequest{
-		Id: user.id,
+		Id: createdUserID,
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, newUsername, getUserByIDResponse.User.Username)
 
 	deleteUserResponse, err := client.DeleteUser(ctx, &proto.DeleteUserRequest{
-		Id: user.id,
+		Id: createdUserID,
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, empty, deleteUserResponse)
 
 	getUserByIDResponse, err = client.GetUserByID(ctx, &proto.GetUserRequest{
-		Id: user.id,
+		Id: createdUserID,
 	})
 	assert.Nil(t, getUserByIDResponse)
 	AssertErrorCode(t, codes.NotFound, err)
@@ -191,12 +189,11 @@ func createUser(t *testing.T, email, username, password string) {
 	defer closeAdminConnection()
 
 	resp, err := admin.CreateUser(ctx, &proto.CreateUserRequest{
-		Id:       uuid.New().String(),
 		Email:    email,
 		Username: username,
 		Password: password,
 		Admin:    false,
 	})
 	require.NoError(t, err)
-	require.Equal(t, empty, resp)
+	require.NotNil(t, resp)
 }

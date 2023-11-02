@@ -22,20 +22,24 @@ func NewApplication(repo *infrastructure.MemoryRepository) *Application {
 }
 
 func (a *Application) CreateUser(
-	id uuid.UUID,
 	username string,
 	email string,
 	rawPassword string,
 	admin bool,
-) error {
-	_, err := a.repo.GetByID(id)
+) (uuid.UUID, error) {
+	_, err := a.repo.GetByUsername(username)
 	if err == nil {
-		return common.FlagError(fmt.Errorf("user with id %q already exists", id), common.FlagAlreadyExists)
+		return uuid.UUID{}, common.FlagError(
+			fmt.Errorf("user with username %q already exists", username),
+			common.FlagAlreadyExists,
+		)
 	}
+
+	id := uuid.New()
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(rawPassword), bcrypt.DefaultCost)
 	if err != nil {
-		return fmt.Errorf("failed to hash password: %w", err)
+		return uuid.UUID{}, fmt.Errorf("failed to hash password: %w", err)
 	}
 
 	user := &models.User{
@@ -48,10 +52,10 @@ func (a *Application) CreateUser(
 
 	err = a.repo.Save(user)
 	if err != nil {
-		return fmt.Errorf("failed to save user: %w", err)
+		return uuid.UUID{}, fmt.Errorf("failed to save user: %w", err)
 	}
 
-	return nil
+	return id, nil
 }
 
 func (a *Application) GetUserByID(id uuid.UUID) (*models.User, error) {

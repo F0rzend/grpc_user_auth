@@ -7,7 +7,7 @@ option go_package = "github.com/F0rzend/grpc_user_auth/proto";
 import "google/protobuf/empty.proto";
 
 service UserService {
-  rpc CreateUser(CreateUserRequest) returns (google.protobuf.Empty) {}
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {}
   rpc GetAllUsers(google.protobuf.Empty) returns (GetAllUsersResponse) {}
   rpc GetUserByID(GetUserRequest) returns (GetUserResponse) {}
   rpc UpdateUser(UpdateUserRequest) returns (google.protobuf.Empty) {}
@@ -15,11 +15,14 @@ service UserService {
 }
 
 message CreateUserRequest {
+  string email = 1;
+  string username = 2;
+  string password = 3;
+  bool admin = 4;
+}
+
+message CreateUserResponse {
   string id = 1;
-  string email = 2;
-  string username = 3;
-  string password = 4;
-  bool admin = 5;
 }
 
 message GetAllUsersResponse {
