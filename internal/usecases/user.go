@@ -1,4 +1,4 @@
-package application
+package usecases
 
 import (
 	"fmt"
@@ -11,17 +11,17 @@ import (
 	"github.com/F0rzend/grpc_user_auth/internal/models"
 )
 
-type Application struct {
+type UserUseCases struct {
 	repo *infrastructure.MemoryRepository
 }
 
-func NewApplication(repo *infrastructure.MemoryRepository) *Application {
-	return &Application{
+func NewUserUseCases(repo *infrastructure.MemoryRepository) *UserUseCases {
+	return &UserUseCases{
 		repo: repo,
 	}
 }
 
-func (a *Application) CreateUser(
+func (a *UserUseCases) CreateUser(
 	username string,
 	email string,
 	rawPassword string,
@@ -58,7 +58,7 @@ func (a *Application) CreateUser(
 	return id, nil
 }
 
-func (a *Application) GetUserByID(id uuid.UUID) (*models.User, error) {
+func (a *UserUseCases) GetUserByID(id uuid.UUID) (*models.User, error) {
 	user, err := a.repo.GetByID(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user by id %q: %w", id, err)
@@ -67,7 +67,7 @@ func (a *Application) GetUserByID(id uuid.UUID) (*models.User, error) {
 	return user, nil
 }
 
-func (a *Application) GetAllUsers() ([]*models.User, error) {
+func (a *UserUseCases) GetAllUsers() ([]*models.User, error) {
 	users, err := a.repo.GetAll()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all users: %w", err)
@@ -76,7 +76,7 @@ func (a *Application) GetAllUsers() ([]*models.User, error) {
 	return users, nil
 }
 
-func (a *Application) UpdateUser(
+func (a *UserUseCases) UpdateUser(
 	id uuid.UUID,
 	username string,
 	email string,
@@ -109,7 +109,7 @@ func (a *Application) UpdateUser(
 	return nil
 }
 
-func (a *Application) DeleteUser(id uuid.UUID) error {
+func (a *UserUseCases) DeleteUser(id uuid.UUID) error {
 	err := a.repo.Delete(id)
 	if err != nil {
 		return fmt.Errorf("failed to delete user: %w", err)
@@ -118,7 +118,7 @@ func (a *Application) DeleteUser(id uuid.UUID) error {
 	return nil
 }
 
-func (a *Application) AuthenticateUser(username string, rawPassword string) (*models.User, error) {
+func (a *UserUseCases) AuthenticateUser(username string, rawPassword string) (*models.User, error) {
 	user, err := a.repo.GetByUsername(username)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user by username %q: %w", username, err)

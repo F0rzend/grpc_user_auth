@@ -15,9 +15,9 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/F0rzend/grpc_user_auth/internal/application"
 	"github.com/F0rzend/grpc_user_auth/internal/common"
 	"github.com/F0rzend/grpc_user_auth/internal/models"
+	"github.com/F0rzend/grpc_user_auth/internal/usecases"
 	"github.com/F0rzend/grpc_user_auth/proto"
 )
 
@@ -26,10 +26,10 @@ var _ proto.UserServiceServer = (*GRPCHandlers)(nil)
 type GRPCHandlers struct {
 	proto.UnimplementedUserServiceServer
 
-	app *application.Application
+	app *usecases.UserUseCases
 }
 
-func NewGRPCHandlers(app *application.Application) *GRPCHandlers {
+func NewGRPCHandlers(app *usecases.UserUseCases) *GRPCHandlers {
 	return &GRPCHandlers{
 		UnimplementedUserServiceServer: proto.UnimplementedUserServiceServer{},
 

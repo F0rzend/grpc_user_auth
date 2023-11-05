@@ -9,10 +9,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/F0rzend/grpc_user_auth/internal/application"
 	"github.com/F0rzend/grpc_user_auth/internal/common"
 	"github.com/F0rzend/grpc_user_auth/internal/infrastructure"
 	"github.com/F0rzend/grpc_user_auth/internal/transport"
+	"github.com/F0rzend/grpc_user_auth/internal/usecases"
 )
 
 const (
@@ -38,7 +38,7 @@ func run() error {
 	ctx = common.InjectLogger(ctx, logger)
 
 	repo := infrastructure.NewMemoryRepository()
-	app := application.NewApplication(repo)
+	app := usecases.NewUserUseCases(repo)
 	handlers := transport.NewGRPCHandlers(app)
 	grpcServer := transport.NewGRPCServer(logger, handlers)
 
@@ -56,7 +56,7 @@ func run() error {
 	return nil
 }
 
-func createAdmin(app *application.Application) error {
+func createAdmin(app *usecases.UserUseCases) error {
 	adminUsername := os.Getenv(AdminUsernameEnv)
 	adminEmail := os.Getenv(AdminEmailEnv)
 	adminPassword := os.Getenv(AdminPasswordEnv)
