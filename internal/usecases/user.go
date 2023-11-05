@@ -21,13 +21,13 @@ func NewUserUseCases(repo *infrastructure.MemoryRepository) *UserUseCases {
 	}
 }
 
-func (a *UserUseCases) CreateUser(
+func (u *UserUseCases) CreateUser(
 	username string,
 	email string,
 	rawPassword string,
 	admin bool,
 ) (uuid.UUID, error) {
-	_, err := a.repo.GetByUsername(username)
+	_, err := u.repo.GetByUsername(username)
 	if err == nil {
 		return uuid.UUID{}, common.FlagError(
 			fmt.Errorf("user with username %q already exists", username),
@@ -53,7 +53,7 @@ func (a *UserUseCases) CreateUser(
 		Admin:        admin,
 	}
 
-	err = a.repo.Save(user)
+	err = u.repo.Save(user)
 	if err != nil {
 		return uuid.UUID{}, fmt.Errorf("failed to save user: %w", err)
 	}
@@ -61,8 +61,8 @@ func (a *UserUseCases) CreateUser(
 	return id, nil
 }
 
-func (a *UserUseCases) GetUserByID(id uuid.UUID) (*models.User, error) {
-	user, err := a.repo.GetByID(id)
+func (u *UserUseCases) GetUserByID(id uuid.UUID) (*models.User, error) {
+	user, err := u.repo.GetByID(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user by id %q: %w", id, err)
 	}
@@ -70,8 +70,8 @@ func (a *UserUseCases) GetUserByID(id uuid.UUID) (*models.User, error) {
 	return user, nil
 }
 
-func (a *UserUseCases) GetAllUsers() ([]*models.User, error) {
-	users, err := a.repo.GetAll()
+func (u *UserUseCases) GetAllUsers() ([]*models.User, error) {
+	users, err := u.repo.GetAll()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all users: %w", err)
 	}
@@ -79,14 +79,14 @@ func (a *UserUseCases) GetAllUsers() ([]*models.User, error) {
 	return users, nil
 }
 
-func (a *UserUseCases) UpdateUser(
+func (u *UserUseCases) UpdateUser(
 	id uuid.UUID,
 	username string,
 	email string,
 	rawPassword string,
 	admin bool,
 ) error {
-	_, err := a.repo.GetByID(id)
+	_, err := u.repo.GetByID(id)
 	if err != nil {
 		return fmt.Errorf("failed to get user by id %q: %w", id, err)
 	}
@@ -104,7 +104,7 @@ func (a *UserUseCases) UpdateUser(
 		Admin:        admin,
 	}
 
-	err = a.repo.Save(user)
+	err = u.repo.Save(user)
 	if err != nil {
 		return fmt.Errorf("failed to save user: %w", err)
 	}
@@ -112,8 +112,8 @@ func (a *UserUseCases) UpdateUser(
 	return nil
 }
 
-func (a *UserUseCases) DeleteUser(id uuid.UUID) error {
-	err := a.repo.Delete(id)
+func (u *UserUseCases) DeleteUser(id uuid.UUID) error {
+	err := u.repo.Delete(id)
 	if err != nil {
 		return fmt.Errorf("failed to delete user: %w", err)
 	}
@@ -121,8 +121,8 @@ func (a *UserUseCases) DeleteUser(id uuid.UUID) error {
 	return nil
 }
 
-func (a *UserUseCases) AuthenticateUser(username string, rawPassword string) (*models.User, error) {
-	user, err := a.repo.GetByUsername(username)
+func (u *UserUseCases) AuthenticateUser(username string, rawPassword string) (*models.User, error) {
+	user, err := u.repo.GetByUsername(username)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user by username %q: %w", username, err)
 	}
