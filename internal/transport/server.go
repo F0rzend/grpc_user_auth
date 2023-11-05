@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/F0rzend/grpc_user_auth/internal/common"
+	"github.com/F0rzend/grpc_user_auth/internal/models"
 	"github.com/F0rzend/grpc_user_auth/proto"
 )
 
@@ -16,11 +17,15 @@ type GRPCServer struct {
 	server *grpc.Server
 }
 
-func NewGRPCServer(logger *slog.Logger, handlers *GRPCHandlers) *GRPCServer {
+func NewGRPCServer(
+	logger *slog.Logger,
+	authenticator *Authenticator[*models.User],
+	handlers *GRPCHandlers,
+) *GRPCServer {
 	server := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(common.GetLoggerInjectionUnaryInterceptor(logger)),
 		grpc.ChainUnaryInterceptor(ErrorHandlingUnaryInterceptor),
-		grpc.ChainUnaryInterceptor(handlers.BasicAuthUnaryInterceptor),
+		grpc.ChainUnaryInterceptor(authenticator.BasicAuthUnaryInterceptor),
 	)
 	proto.RegisterUserServiceServer(server, handlers)
 
