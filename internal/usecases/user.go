@@ -34,6 +34,9 @@ func (a *UserUseCases) CreateUser(
 			common.FlagAlreadyExists,
 		)
 	}
+	if !common.IsFlaggedError(err, common.FlagNotFound) {
+		return uuid.UUID{}, fmt.Errorf("failed to get user by username %q: %w", username, err)
+	}
 
 	id := uuid.New()
 
