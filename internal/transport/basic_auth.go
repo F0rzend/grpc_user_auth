@@ -43,12 +43,12 @@ func (a *Authenticator[UserModel]) BasicAuthUnaryInterceptor(
 
 	token, err := extractAuthToken(ctx, expectedSchema)
 	if err != nil {
-		return nil, fmt.Errorf("failed to extract auth token: %w", err)
+		return nil, err
 	}
 
 	credentials, err := getBasicAuthCredentialsFromToken(token)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get basic auth credentials from token: %w", err)
+		return nil, err
 	}
 
 	user, err := a.authFn(credentials.username, credentials.password)
