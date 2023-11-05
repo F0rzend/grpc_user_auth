@@ -10,23 +10,23 @@ import (
 	"github.com/F0rzend/grpc_user_auth/internal/models"
 )
 
-type MemoryRepository struct {
+type Repository struct {
 	users sync.Map
 }
 
-func NewMemoryRepository() *MemoryRepository {
-	return &MemoryRepository{
+func NewRepository() *Repository {
+	return &Repository{
 		users: sync.Map{},
 	}
 }
 
-func (r *MemoryRepository) Save(user *models.User) error {
+func (r *Repository) Save(user *models.User) error {
 	r.users.Store(user.ID.String(), user)
 
 	return nil
 }
 
-func (r *MemoryRepository) GetByID(id uuid.UUID) (*models.User, error) {
+func (r *Repository) GetByID(id uuid.UUID) (*models.User, error) {
 	if value, ok := r.users.Load(id.String()); ok {
 		user, ok := value.(*models.User)
 		if !ok {
@@ -39,7 +39,7 @@ func (r *MemoryRepository) GetByID(id uuid.UUID) (*models.User, error) {
 	return nil, common.FlagError(fmt.Errorf("user with id %q not found", id), common.FlagNotFound)
 }
 
-func (r *MemoryRepository) GetByUsername(username string) (*models.User, error) {
+func (r *Repository) GetByUsername(username string) (*models.User, error) {
 	var found *models.User
 
 	r.users.Range(func(_, value any) bool {
@@ -64,7 +64,7 @@ func (r *MemoryRepository) GetByUsername(username string) (*models.User, error) 
 	return found, nil
 }
 
-func (r *MemoryRepository) GetAll() ([]*models.User, error) {
+func (r *Repository) GetAll() ([]*models.User, error) {
 	users := make([]*models.User, 0)
 
 	r.users.Range(func(key, value interface{}) bool {
@@ -81,7 +81,7 @@ func (r *MemoryRepository) GetAll() ([]*models.User, error) {
 	return users, nil
 }
 
-func (r *MemoryRepository) Delete(id uuid.UUID) error {
+func (r *Repository) Delete(id uuid.UUID) error {
 	existing, err := r.GetByID(id)
 	if err != nil {
 		return err

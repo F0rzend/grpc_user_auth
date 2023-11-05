@@ -16,10 +16,10 @@ import (
 )
 
 type UserUseCases struct {
-	repo *infrastructure.MemoryRepository
+	repo *infrastructure.Repository
 }
 
-func NewUserUseCases(repo *infrastructure.MemoryRepository) *UserUseCases {
+func NewUserUseCases(repo *infrastructure.Repository) *UserUseCases {
 	return &UserUseCases{
 		repo: repo,
 	}

@@ -37,7 +37,7 @@ func run() error {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	ctx = common.InjectLogger(ctx, logger)
 
-	repo := infrastructure.NewMemoryRepository()
+	repo := infrastructure.NewRepository()
 	userUseCases := usecases.NewUserUseCases(repo)
 	handlers := transport.NewGRPCHandlers(userUseCases)
 	grpcServer := transport.NewGRPCServer(logger, handlers)

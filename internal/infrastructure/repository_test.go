@@ -13,20 +13,20 @@ import (
 	"github.com/F0rzend/grpc_user_auth/internal/models"
 )
 
-func TestMemoryRepository_Save(t *testing.T) {
+func TestRepository_Save(t *testing.T) {
 	t.Parallel()
 
 	testUser := createTestUser(t)
-	sut := infrastructure.NewMemoryRepository()
+	sut := infrastructure.NewRepository()
 
 	err := sut.Save(testUser)
 	assert.NoError(t, err)
 }
 
-func TestMemoryRepository_GetByID(t *testing.T) {
+func TestRepository_GetByID(t *testing.T) {
 	t.Parallel()
 
-	sut := infrastructure.NewMemoryRepository()
+	sut := infrastructure.NewRepository()
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
@@ -50,13 +50,13 @@ func TestMemoryRepository_GetByID(t *testing.T) {
 	})
 }
 
-func TestMemoryRepository_GetAll(t *testing.T) {
+func TestRepository_GetAll(t *testing.T) {
 	t.Parallel()
 
 	const usersCount = 10
 	savedIDs := make([]uuid.UUID, usersCount)
 
-	sut := infrastructure.NewMemoryRepository()
+	sut := infrastructure.NewRepository()
 
 	for i := 0; i < usersCount; i++ {
 		user := createTestUser(t)
@@ -74,10 +74,10 @@ func TestMemoryRepository_GetAll(t *testing.T) {
 	}
 }
 
-func TestMemoryRepository_Delete(t *testing.T) {
+func TestRepository_Delete(t *testing.T) {
 	t.Parallel()
 
-	sut := infrastructure.NewMemoryRepository()
+	sut := infrastructure.NewRepository()
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
@@ -107,10 +107,10 @@ func TestMemoryRepository_Delete(t *testing.T) {
 	})
 }
 
-func TestMemoryRepository_GetByUsername(t *testing.T) {
+func TestRepository_GetByUsername(t *testing.T) {
 	t.Parallel()
 
-	sut := infrastructure.NewMemoryRepository()
+	sut := infrastructure.NewRepository()
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
