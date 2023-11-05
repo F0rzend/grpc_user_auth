@@ -65,12 +65,17 @@ func createAdmin(userUseCases *usecases.UserUseCases) error {
 		return fmt.Errorf("admin username, email and password must be set")
 	}
 
-	_, err := userUseCases.CreateUser(
+	cmd, err := usecases.NewCreateUserCommand(
 		adminUsername,
 		adminEmail,
 		adminPassword,
 		true,
 	)
+	if err != nil {
+		return fmt.Errorf("failed to create admin: %w", err)
+	}
+
+	_, err = userUseCases.CreateUser(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to create admin: %w", err)
 	}

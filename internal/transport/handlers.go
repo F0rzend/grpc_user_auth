@@ -4,10 +4,8 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"net/mail"
 	"strings"
 
-	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -47,17 +45,17 @@ func (h *GRPCHandlers) CreateUser(
 		return nil, err
 	}
 
-	_, err = mail.ParseAddress(request.Email)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "Invalid email")
-	}
-
-	id, err := h.userUseCases.CreateUser(
+	cmd, err := usecases.NewCreateUserCommand(
 		request.Username,
 		request.Email,
 		request.Password,
 		request.Admin,
 	)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "Validation Error")
+	}
+
+	id, err := h.userUseCases.CreateUser(cmd)
 	switch {
 	case err == nil:
 	case common.IsFlaggedError(err, common.FlagAlreadyExists):
@@ -98,18 +96,18 @@ func (h *GRPCHandlers) GetUserByID(ctx context.Context, request *proto.GetUserRe
 		return nil, err
 	}
 
-	parsedUUID, err := uuid.Parse(request.Id)
+	query, err := usecases.NewGetUserByIDQuery(request.Id)
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "Invalid UUID")
+		return nil, status.Error(codes.InvalidArgument, "Validation Error")
 	}
 
-	user, err := h.userUseCases.GetUserByID(parsedUUID)
+	user, err := h.userUseCases.GetUserByID(query)
 	switch {
 	case err == nil:
 	case common.IsFlaggedError(err, common.FlagNotFound):
 		return nil, status.Error(codes.NotFound, "User not found")
 	default:
-		return nil, fmt.Errorf("failed to get user by id %q: %w", parsedUUID, err)
+		return nil, fmt.Errorf("failed to get user by id %q: %w", request.Id, err)
 	}
 
 	response := &proto.GetUserResponse{
@@ -130,23 +128,18 @@ func (h *GRPCHandlers) UpdateUser(ctx context.Context, request *proto.UpdateUser
 		return nil, err
 	}
 
-	parsedUUID, err := uuid.Parse(request.Id)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "Invalid UUID")
-	}
-
-	_, err = mail.ParseAddress(request.Email)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "Invalid email")
-	}
-
-	err = h.userUseCases.UpdateUser(
-		parsedUUID,
+	cmd, err := usecases.NewUpdateUserCommand(
+		request.Id,
 		request.Username,
 		request.Email,
 		request.Password,
 		request.Admin,
 	)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "Validation Error")
+	}
+
+	err = h.userUseCases.UpdateUser(cmd)
 	switch {
 	case err == nil:
 	case common.IsFlaggedError(err, common.FlagNotFound):
@@ -164,12 +157,12 @@ func (h *GRPCHandlers) DeleteUser(ctx context.Context, request *proto.DeleteUser
 		return nil, err
 	}
 
-	parsedUUID, err := uuid.Parse(request.Id)
+	cmd, err := usecases.NewDeleteUserCommand(request.Id)
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "Invalid UUID")
+		return nil, status.Error(codes.InvalidArgument, "Validation Error")
 	}
 
-	err = h.userUseCases.DeleteUser(parsedUUID)
+	err = h.userUseCases.DeleteUser(cmd)
 	switch {
 	case err == nil:
 	case common.IsFlaggedError(err, common.FlagNotFound):

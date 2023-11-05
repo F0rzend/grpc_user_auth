@@ -1,10 +1,14 @@
 package usecases
 
 import (
+	"errors"
 	"fmt"
+	"net/mail"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/F0rzend/grpc_user_auth/internal/common"
 	"github.com/F0rzend/grpc_user_auth/internal/infrastructure"
@@ -21,37 +25,58 @@ func NewUserUseCases(repo *infrastructure.MemoryRepository) *UserUseCases {
 	}
 }
 
-func (u *UserUseCases) CreateUser(
+type CreateUserCommand struct {
+	username string
+	email    string
+	password string
+	admin    bool
+}
+
+func NewCreateUserCommand(
 	username string,
 	email string,
-	rawPassword string,
+	password string,
 	admin bool,
-) (uuid.UUID, error) {
-	_, err := u.repo.GetByUsername(username)
+) (*CreateUserCommand, error) {
+	_, err := mail.ParseAddress(email)
+	if err != nil {
+		return nil, errors.New("invalid email") //nolint:wrapcheck
+	}
+
+	return &CreateUserCommand{
+		username: username,
+		email:    email,
+		password: password,
+		admin:    admin,
+	}, nil
+}
+
+func (u *UserUseCases) CreateUser(cmd *CreateUserCommand) (uuid.UUID, error) {
+	_, err := u.repo.GetByUsername(cmd.username)
 	switch {
 	case common.IsFlaggedError(err, common.FlagNotFound):
 	case err == nil:
 		return uuid.UUID{}, common.FlagError(
-			fmt.Errorf("user with username %q already exists", username),
+			fmt.Errorf("user with username %q already exists", cmd.username),
 			common.FlagAlreadyExists,
 		)
 	default:
-		return uuid.UUID{}, fmt.Errorf("failed to get user by username %q: %w", username, err)
+		return uuid.UUID{}, fmt.Errorf("failed to get user by username %q: %w", cmd.username, err)
 	}
 
 	id := uuid.New()
 
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(rawPassword), bcrypt.DefaultCost)
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(cmd.password), bcrypt.DefaultCost)
 	if err != nil {
 		return uuid.UUID{}, fmt.Errorf("failed to hash password: %w", err)
 	}
 
 	user := &models.User{
 		ID:           id,
-		Username:     username,
-		Email:        email,
+		Username:     cmd.username,
+		Email:        cmd.email,
 		PasswordHash: passwordHash,
-		Admin:        admin,
+		Admin:        cmd.admin,
 	}
 
 	err = u.repo.Save(user)
@@ -62,10 +87,25 @@ func (u *UserUseCases) CreateUser(
 	return id, nil
 }
 
-func (u *UserUseCases) GetUserByID(id uuid.UUID) (*models.User, error) {
-	user, err := u.repo.GetByID(id)
+type GetUserByIDQuery struct {
+	id uuid.UUID
+}
+
+func NewGetUserByIDQuery(id string) (*GetUserByIDQuery, error) {
+	userUUID, err := uuid.Parse(id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user by id %q: %w", id, err)
+		return nil, fmt.Errorf("failed to parse id %q: %w", id, err)
+	}
+
+	return &GetUserByIDQuery{
+		id: userUUID,
+	}, nil
+}
+
+func (u *UserUseCases) GetUserByID(query *GetUserByIDQuery) (*models.User, error) {
+	user, err := u.repo.GetByID(query.id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user by id %q: %w", query.id, err)
 	}
 
 	return user, nil
@@ -80,29 +120,57 @@ func (u *UserUseCases) GetAllUsers() ([]*models.User, error) {
 	return users, nil
 }
 
-func (u *UserUseCases) UpdateUser(
-	id uuid.UUID,
+type UpdateUserCommand struct {
+	id       uuid.UUID
+	username string
+	email    string
+	password string
+	admin    bool
+}
+
+func NewUpdateUserCommand(
+	id string,
 	username string,
 	email string,
-	rawPassword string,
+	password string,
 	admin bool,
-) error {
-	_, err := u.repo.GetByID(id)
+) (*UpdateUserCommand, error) {
+	userUUID, err := uuid.Parse(id)
 	if err != nil {
-		return fmt.Errorf("failed to get user by id %q: %w", id, err)
+		return nil, fmt.Errorf("failed to parse id %q: %w", id, err)
 	}
 
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(rawPassword), bcrypt.DefaultCost)
+	_, err = mail.ParseAddress(email)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "Invalid email")
+	}
+
+	return &UpdateUserCommand{
+		id:       userUUID,
+		username: username,
+		email:    email,
+		password: password,
+		admin:    admin,
+	}, nil
+}
+
+func (u *UserUseCases) UpdateUser(cmd *UpdateUserCommand) error {
+	_, err := u.repo.GetByID(cmd.id)
+	if err != nil {
+		return fmt.Errorf("failed to get user by id %q: %w", cmd.id, err)
+	}
+
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(cmd.password), bcrypt.DefaultCost)
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
 	user := &models.User{
-		ID:           id,
-		Username:     username,
-		Email:        email,
+		ID:           cmd.id,
+		Username:     cmd.username,
+		Email:        cmd.email,
 		PasswordHash: passwordHash,
-		Admin:        admin,
+		Admin:        cmd.admin,
 	}
 
 	err = u.repo.Save(user)
@@ -113,8 +181,23 @@ func (u *UserUseCases) UpdateUser(
 	return nil
 }
 
-func (u *UserUseCases) DeleteUser(id uuid.UUID) error {
-	err := u.repo.Delete(id)
+type DeleteUserCommand struct {
+	id uuid.UUID
+}
+
+func NewDeleteUserCommand(id string) (*DeleteUserCommand, error) {
+	userUUID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse id %q: %w", id, err)
+	}
+
+	return &DeleteUserCommand{
+		id: userUUID,
+	}, nil
+}
+
+func (u *UserUseCases) DeleteUser(cmd *DeleteUserCommand) error {
+	err := u.repo.Delete(cmd.id)
 	if err != nil {
 		return fmt.Errorf("failed to delete user: %w", err)
 	}
