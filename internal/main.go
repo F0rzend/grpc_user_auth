@@ -39,8 +39,9 @@ func run() error {
 
 	repo := infrastructure.NewMemoryRepository()
 	userUseCases := usecases.NewUserUseCases(repo)
-	handlers := transport.NewGRPCHandlers(userUseCases)
-	grpcServer := transport.NewGRPCServer(logger, handlers)
+	authenticator := transport.NewAuthenticator(userUseCases.AuthenticateUser)
+	handlers := transport.NewGRPCHandlers(userUseCases, authenticator)
+	grpcServer := transport.NewGRPCServer(logger, authenticator, handlers)
 
 	if err := createAdmin(userUseCases); err != nil {
 		return fmt.Errorf("failed to create admin: %w", err)
