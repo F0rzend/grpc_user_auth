@@ -9,7 +9,7 @@
 4. password
 5. admin (bool)
 
-Сервис должeн иметь набор ручек (gRPC):
+Сервис должен иметь набор ручек (gRPC):
 Создание пользователя,
 Выдача списка пользователей
 Выдача юзера по id
@@ -25,8 +25,8 @@
 ## Зависимости для разработки
 
 * [golangci-lint](https://golangci-lint.run/) -- Для поддержки кода в хорошем состоянии
-* [protoc](https://github.com/protocolbuffers/protobuf/releases/tag/v24.4) + [proto-gen-go](google.golang.org/protobuf/cmd/protoc-gen-go@v1.28) & [protoc-gen-go-grpc](google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2) -- Для компиляции proto файлов
-* [pre-commit](https://pre-commit.com/) -- Для исключения возможности коммитить "грязный" код
+* [protoc](https://github.com/protocolbuffers/protobuf/releases/tag/v24.4) + [proto-gen-go](https://google.golang.org/protobuf/cmd/protoc-gen-go@v1.28) & [protoc-gen-go-grpc](https://google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2) -- Для компиляции proto файлов
+* [pre-commit](https://pre-commit.com/) -- Для исключения возможности создавать коммиты с "грязным" кодом
 * [docker](https://docs.docker.com/get-started/)(with compose) -- Для разворачивания окружения
 * [make](https://www.gnu.org/software/make/) -- Для упрощения работы с окружением
 
@@ -53,7 +53,7 @@ Docker compose использует `.env` файл, пример которог
 с использованием [testcontainers](https://testcontainers.com/).
 Сами же тесты вызываются из хостовой системы.
 
-__end-to-end тесты не читают .env файл, поэтому необходимо прописать переменные окружения вручную.__
+__End-to-end тесты не читают .env файл, поэтому необходимо прописать переменные окружения вручную.__
 
 Запуск end-to-end тестов осуществляется командой `make test-e2e`.
 
@@ -67,7 +67,7 @@ __end-to-end тесты не читают .env файл, поэтому необ
 
 В приложении используется чистая архитектура, с разделением на слои:
 * transport -- слой представления: обслуживание gRPC запросов
-* usecases -- слой бизнес-логики
+* use_cases -- слой бизнес-логики
 * infrastructure -- источник данных: обращения к базе данных
 
 ### Альтернативная структура
@@ -104,10 +104,10 @@ internal/
 * API приложения следует CQS принципу, поэтому команды апи,
 такие, как создание и изменение пользователя, возвращают пустой объект.
 
-* Для хранения данных был выбран sync.Map, так как он является потокобезопасным
+* Для хранения данных был выбран `sync.Map`, так как он является потокобезопасным
 
-* Так как sync.Map не предоставляет возможности получить количество записей,
-MemoryRepository.GetAll создаёт пустой срез и на каждой
+* Так как `sync.Map` не предоставляет возможности получить количество записей,
+`MemoryRepository.GetAll` создаёт пустой срез и на каждой
 итерации расширяет его при необходимости (append).
 Это негативно сказывается на производительности.
 Можно было бы считать количество записей в отдельной переменной,
