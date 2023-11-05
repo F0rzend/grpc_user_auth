@@ -26,14 +26,14 @@ var _ proto.UserServiceServer = (*GRPCHandlers)(nil)
 type GRPCHandlers struct {
 	proto.UnimplementedUserServiceServer
 
-	app *usecases.UserUseCases
+	userUseCases *usecases.UserUseCases
 }
 
-func NewGRPCHandlers(app *usecases.UserUseCases) *GRPCHandlers {
+func NewGRPCHandlers(userUseCases *usecases.UserUseCases) *GRPCHandlers {
 	return &GRPCHandlers{
 		UnimplementedUserServiceServer: proto.UnimplementedUserServiceServer{},
 
-		app: app,
+		userUseCases: userUseCases,
 	}
 }
 
@@ -53,7 +53,7 @@ func (h *GRPCHandlers) CreateUser(
 		return nil, status.Error(codes.InvalidArgument, "Invalid email")
 	}
 
-	id, err := h.app.CreateUser(
+	id, err := h.userUseCases.CreateUser(
 		request.Username,
 		request.Email,
 		request.Password,
@@ -72,7 +72,7 @@ func (h *GRPCHandlers) CreateUser(
 }
 
 func (h *GRPCHandlers) GetAllUsers(_ context.Context, _ *emptypb.Empty) (*proto.GetAllUsersResponse, error) {
-	users, err := h.app.GetAllUsers()
+	users, err := h.userUseCases.GetAllUsers()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all users: %w", err)
 	}
@@ -103,7 +103,7 @@ func (h *GRPCHandlers) GetUserByID(ctx context.Context, request *proto.GetUserRe
 		return nil, status.Error(codes.InvalidArgument, "Invalid UUID")
 	}
 
-	user, err := h.app.GetUserByID(parsedUUID)
+	user, err := h.userUseCases.GetUserByID(parsedUUID)
 	if common.IsFlaggedError(err, common.FlagNotFound) {
 		return nil, status.Error(codes.NotFound, "User not found")
 	}
@@ -139,7 +139,7 @@ func (h *GRPCHandlers) UpdateUser(ctx context.Context, request *proto.UpdateUser
 		return nil, status.Error(codes.InvalidArgument, "Invalid email")
 	}
 
-	err = h.app.UpdateUser(
+	err = h.userUseCases.UpdateUser(
 		parsedUUID,
 		request.Username,
 		request.Email,
@@ -167,7 +167,7 @@ func (h *GRPCHandlers) DeleteUser(ctx context.Context, request *proto.DeleteUser
 		return nil, status.Error(codes.InvalidArgument, "Invalid UUID")
 	}
 
-	err = h.app.DeleteUser(parsedUUID)
+	err = h.userUseCases.DeleteUser(parsedUUID)
 	if common.IsFlaggedError(err, common.FlagNotFound) {
 		return nil, status.Error(codes.NotFound, "User not found")
 	}
@@ -217,7 +217,7 @@ func (h *GRPCHandlers) BasicAuthUnaryInterceptor(
 	credentials := strings.SplitN(string(decoded), ":", credentialsNumber)
 	username, password := credentials[0], credentials[1]
 
-	user, err := h.app.AuthenticateUser(username, password)
+	user, err := h.userUseCases.AuthenticateUser(username, password)
 	if common.IsFlaggedError(err, common.FlagNotFound) {
 		return nil, status.Error(codes.Unauthenticated, "Invalid credentials")
 	}
