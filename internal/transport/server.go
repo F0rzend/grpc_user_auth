@@ -19,6 +19,7 @@ type GRPCServer struct {
 func NewGRPCServer(logger *slog.Logger, handlers *GRPCHandlers) *GRPCServer {
 	server := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(common.GetLoggerInjectionUnaryInterceptor(logger)),
+		grpc.ChainUnaryInterceptor(ErrorHandlingUnaryInterceptor),
 		grpc.ChainUnaryInterceptor(handlers.BasicAuthUnaryInterceptor),
 	)
 	proto.RegisterUserServiceServer(server, handlers)

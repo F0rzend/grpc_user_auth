@@ -28,13 +28,14 @@ func (u *UserUseCases) CreateUser(
 	admin bool,
 ) (uuid.UUID, error) {
 	_, err := u.repo.GetByUsername(username)
-	if err == nil {
+	switch {
+	case common.IsFlaggedError(err, common.FlagNotFound):
+	case err == nil:
 		return uuid.UUID{}, common.FlagError(
 			fmt.Errorf("user with username %q already exists", username),
 			common.FlagAlreadyExists,
 		)
-	}
-	if !common.IsFlaggedError(err, common.FlagNotFound) {
+	default:
 		return uuid.UUID{}, fmt.Errorf("failed to get user by username %q: %w", username, err)
 	}
 

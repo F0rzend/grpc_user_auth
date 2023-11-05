@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"log/slog"
 	"net/mail"
 	"strings"
 
@@ -59,10 +58,11 @@ func (h *GRPCHandlers) CreateUser(
 		request.Password,
 		request.Admin,
 	)
-	if common.IsFlaggedError(err, common.FlagAlreadyExists) {
+	switch {
+	case err == nil:
+	case common.IsFlaggedError(err, common.FlagAlreadyExists):
 		return nil, status.Error(codes.AlreadyExists, "User already exists")
-	}
-	if err != nil {
+	default:
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
@@ -104,10 +104,11 @@ func (h *GRPCHandlers) GetUserByID(ctx context.Context, request *proto.GetUserRe
 	}
 
 	user, err := h.userUseCases.GetUserByID(parsedUUID)
-	if common.IsFlaggedError(err, common.FlagNotFound) {
+	switch {
+	case err == nil:
+	case common.IsFlaggedError(err, common.FlagNotFound):
 		return nil, status.Error(codes.NotFound, "User not found")
-	}
-	if err != nil {
+	default:
 		return nil, fmt.Errorf("failed to get user by id %q: %w", parsedUUID, err)
 	}
 
@@ -146,10 +147,11 @@ func (h *GRPCHandlers) UpdateUser(ctx context.Context, request *proto.UpdateUser
 		request.Password,
 		request.Admin,
 	)
-	if common.IsFlaggedError(err, common.FlagNotFound) {
+	switch {
+	case err == nil:
+	case common.IsFlaggedError(err, common.FlagNotFound):
 		return nil, status.Error(codes.NotFound, "User not found")
-	}
-	if err != nil {
+	default:
 		return nil, fmt.Errorf("failed to update user: %w", err)
 	}
 
@@ -168,10 +170,11 @@ func (h *GRPCHandlers) DeleteUser(ctx context.Context, request *proto.DeleteUser
 	}
 
 	err = h.userUseCases.DeleteUser(parsedUUID)
-	if common.IsFlaggedError(err, common.FlagNotFound) {
+	switch {
+	case err == nil:
+	case common.IsFlaggedError(err, common.FlagNotFound):
 		return nil, status.Error(codes.NotFound, "User not found")
-	}
-	if err != nil {
+	default:
 		return nil, fmt.Errorf("failed to delete user: %w", err)
 	}
 
@@ -189,8 +192,6 @@ func (h *GRPCHandlers) BasicAuthUnaryInterceptor(
 	const expectedSchema = "Basic"
 	const authorizationHeaderKey = "authorization"
 	const credentialsNumber = 2
-
-	logger := common.ExtractLogger(ctx)
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
@@ -222,9 +223,7 @@ func (h *GRPCHandlers) BasicAuthUnaryInterceptor(
 		return nil, status.Error(codes.Unauthenticated, "Invalid credentials")
 	}
 	if err != nil {
-		logger.ErrorContext(ctx, "Failed to authenticate user", slog.String("error", err.Error()))
-
-		return nil, status.Error(codes.Internal, "Failed to authenticate user")
+		return nil, fmt.Errorf("failed to authenticate user: %w", err)
 	}
 
 	ctx = context.WithValue(ctx, authContextKey{}, user)

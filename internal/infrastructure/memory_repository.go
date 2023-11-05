@@ -42,7 +42,7 @@ func (r *MemoryRepository) GetByID(id uuid.UUID) (*models.User, error) {
 func (r *MemoryRepository) GetByUsername(username string) (*models.User, error) {
 	var found *models.User
 
-	r.users.Range(func(key, value interface{}) bool {
+	r.users.Range(func(_, value any) bool {
 		user, ok := value.(*models.User)
 		if !ok {
 			return false
