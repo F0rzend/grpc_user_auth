@@ -7,8 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/F0rzend/grpc_user_auth/internal/common"
 	"github.com/F0rzend/grpc_user_auth/internal/infrastructure"
@@ -40,7 +38,10 @@ func NewCreateUserCommand(
 ) (*CreateUserCommand, error) {
 	_, err := mail.ParseAddress(email)
 	if err != nil {
-		return nil, errors.New("invalid email") //nolint:wrapcheck
+		return nil, common.FlagError(
+			errors.New("invalid email"),
+			common.FlagInvalidArgument,
+		)
 	}
 
 	return &CreateUserCommand{
@@ -94,7 +95,10 @@ type GetUserByIDQuery struct {
 func NewGetUserByIDQuery(id string) (*GetUserByIDQuery, error) {
 	userUUID, err := uuid.Parse(id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse id %q: %w", id, err)
+		return nil, common.FlagError(
+			fmt.Errorf("failed to parse id %q: %w", id, err),
+			common.FlagInvalidArgument,
+		)
 	}
 
 	return &GetUserByIDQuery{
@@ -137,12 +141,18 @@ func NewUpdateUserCommand(
 ) (*UpdateUserCommand, error) {
 	userUUID, err := uuid.Parse(id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse id %q: %w", id, err)
+		return nil, common.FlagError(
+			fmt.Errorf("failed to parse id %q: %w", id, err),
+			common.FlagInvalidArgument,
+		)
 	}
 
 	_, err = mail.ParseAddress(email)
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "Invalid email")
+		return nil, common.FlagError(
+			errors.New("invalid email"),
+			common.FlagInvalidArgument,
+		)
 	}
 
 	return &UpdateUserCommand{
@@ -188,7 +198,10 @@ type DeleteUserCommand struct {
 func NewDeleteUserCommand(id string) (*DeleteUserCommand, error) {
 	userUUID, err := uuid.Parse(id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse id %q: %w", id, err)
+		return nil, common.FlagError(
+			fmt.Errorf("failed to parse id %q: %w", id, err),
+			common.FlagInvalidArgument,
+		)
 	}
 
 	return &DeleteUserCommand{

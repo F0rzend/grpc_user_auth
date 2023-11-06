@@ -5,8 +5,9 @@ import "errors"
 type Flag string
 
 const (
-	FlagNotFound      Flag = "not found"
-	FlagAlreadyExists Flag = "already exists"
+	FlagNotFound        Flag = "not found"
+	FlagAlreadyExists   Flag = "already exists"
+	FlagInvalidArgument Flag = "invalid argument"
 )
 
 type Flagged interface {

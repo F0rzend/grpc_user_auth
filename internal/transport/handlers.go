@@ -52,8 +52,12 @@ func (h *GRPCHandlers) CreateUser(
 		request.Password,
 		request.Admin,
 	)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "Validation Error")
+	switch {
+	case err == nil:
+	case common.IsFlaggedError(err, common.FlagInvalidArgument):
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	default:
+		return nil, fmt.Errorf("failed to create CreateUser command: %w", err)
 	}
 
 	id, err := h.userUseCases.CreateUser(cmd)
@@ -98,8 +102,12 @@ func (h *GRPCHandlers) GetUserByID(ctx context.Context, request *proto.GetUserRe
 	}
 
 	query, err := usecases.NewGetUserByIDQuery(request.Id)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "Validation Error")
+	switch {
+	case err == nil:
+	case common.IsFlaggedError(err, common.FlagInvalidArgument):
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	default:
+		return nil, fmt.Errorf("failed to create GetUserByID query: %w", err)
 	}
 
 	user, err := h.userUseCases.GetUserByID(query)
@@ -136,8 +144,12 @@ func (h *GRPCHandlers) UpdateUser(ctx context.Context, request *proto.UpdateUser
 		request.Password,
 		request.Admin,
 	)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "Validation Error")
+	switch {
+	case err == nil:
+	case common.IsFlaggedError(err, common.FlagInvalidArgument):
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	default:
+		return nil, fmt.Errorf("failed to create UpdateUser command: %w", err)
 	}
 
 	err = h.userUseCases.UpdateUser(cmd)
@@ -159,8 +171,12 @@ func (h *GRPCHandlers) DeleteUser(ctx context.Context, request *proto.DeleteUser
 	}
 
 	cmd, err := usecases.NewDeleteUserCommand(request.Id)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "Validation Error")
+	switch {
+	case err == nil:
+	case common.IsFlaggedError(err, common.FlagInvalidArgument):
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	default:
+		return nil, fmt.Errorf("failed to create DeleteUser command: %w", err)
 	}
 
 	err = h.userUseCases.DeleteUser(cmd)
