@@ -2,6 +2,7 @@ package transport
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"google.golang.org/grpc/codes"
@@ -56,7 +57,7 @@ func (h *GRPCHandlers) CreateUser(
 	id, err := h.userUseCases.CreateUser(cmd)
 	switch {
 	case err == nil:
-	case common.IsFlaggedError(err, common.FlagAlreadyExists):
+	case errors.Is(err, common.ErrAlreadyExists):
 		return nil, status.Error(codes.AlreadyExists, "User already exists")
 	default:
 		return nil, fmt.Errorf("failed to create user: %w", err)
@@ -95,18 +96,14 @@ func (h *GRPCHandlers) GetUserByID(ctx context.Context, request *proto.GetUserRe
 	}
 
 	query, err := usecases.NewGetUserByIDQuery(request.Id)
-	switch {
-	case err == nil:
-	case common.IsFlaggedError(err, common.FlagInvalidArgument):
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	default:
+	if err != nil {
 		return nil, fmt.Errorf("failed to create GetUserByID query: %w", err)
 	}
 
 	user, err := h.userUseCases.GetUserByID(query)
 	switch {
 	case err == nil:
-	case common.IsFlaggedError(err, common.FlagNotFound):
+	case errors.Is(err, common.ErrNotFound):
 		return nil, status.Error(codes.NotFound, "User not found")
 	default:
 		return nil, fmt.Errorf("failed to get user by id %q: %w", request.Id, err)
@@ -137,18 +134,14 @@ func (h *GRPCHandlers) UpdateUser(ctx context.Context, request *proto.UpdateUser
 		request.Password,
 		request.Admin,
 	)
-	switch {
-	case err == nil:
-	case common.IsFlaggedError(err, common.FlagInvalidArgument):
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	default:
-		return nil, fmt.Errorf("failed to create UpdateUser command: %w", err)
+	if err != nil {
+		return empty, fmt.Errorf("failed to create UpdateUser command: %w", err)
 	}
 
 	err = h.userUseCases.UpdateUser(cmd)
 	switch {
 	case err == nil:
-	case common.IsFlaggedError(err, common.FlagNotFound):
+	case errors.Is(err, common.ErrNotFound):
 		return nil, status.Error(codes.NotFound, "User not found")
 	default:
 		return nil, fmt.Errorf("failed to update user: %w", err)
@@ -164,18 +157,14 @@ func (h *GRPCHandlers) DeleteUser(ctx context.Context, request *proto.DeleteUser
 	}
 
 	cmd, err := usecases.NewDeleteUserCommand(request.Id)
-	switch {
-	case err == nil:
-	case common.IsFlaggedError(err, common.FlagInvalidArgument):
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	default:
-		return nil, fmt.Errorf("failed to create DeleteUser command: %w", err)
+	if err != nil {
+		return empty, fmt.Errorf("failed to create DeleteUser command: %w", err)
 	}
 
 	err = h.userUseCases.DeleteUser(cmd)
 	switch {
 	case err == nil:
-	case common.IsFlaggedError(err, common.FlagNotFound):
+	case errors.Is(err, common.ErrNotFound):
 		return nil, status.Error(codes.NotFound, "User not found")
 	default:
 		return nil, fmt.Errorf("failed to delete user: %w", err)

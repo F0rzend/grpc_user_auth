@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -45,12 +46,9 @@ func NewCreateUserCommand(
 func (u *UserUseCases) CreateUser(cmd *CreateUserCommand) (uuid.UUID, error) {
 	_, err := u.repo.GetByUsername(cmd.username)
 	switch {
-	case common.IsFlaggedError(err, common.FlagNotFound):
+	case errors.Is(err, common.ErrNotFound):
 	case err == nil:
-		return uuid.UUID{}, common.FlagError(
-			fmt.Errorf("user with username %q already exists", cmd.username),
-			common.FlagAlreadyExists,
-		)
+		return uuid.UUID{}, fmt.Errorf("%w: user with username %q already exists", common.ErrAlreadyExists, cmd.username)
 	default:
 		return uuid.UUID{}, fmt.Errorf("failed to get user by username %q: %w", cmd.username, err)
 	}
@@ -128,10 +126,7 @@ func NewUpdateUserCommand(
 ) (*UpdateUserCommand, error) {
 	userUUID, err := uuid.Parse(id)
 	if err != nil {
-		return nil, common.FlagError(
-			fmt.Errorf("failed to parse id %q: %w", id, err),
-			common.FlagInvalidArgument,
-		)
+		return nil, fmt.Errorf("failed to parse id %q: %w", id, err)
 	}
 
 	return &UpdateUserCommand{
@@ -177,10 +172,7 @@ type DeleteUserCommand struct {
 func NewDeleteUserCommand(id string) (*DeleteUserCommand, error) {
 	userUUID, err := uuid.Parse(id)
 	if err != nil {
-		return nil, common.FlagError(
-			fmt.Errorf("failed to parse id %q: %w", id, err),
-			common.FlagInvalidArgument,
-		)
+		return nil, fmt.Errorf("failed to parse id %q: %w", id, err)
 	}
 
 	return &DeleteUserCommand{

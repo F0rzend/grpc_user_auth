@@ -45,7 +45,7 @@ func TestRepository_GetByID(t *testing.T) {
 
 		user, err := sut.GetByID(uuid.New())
 
-		assertErrorFlag(t, err, common.FlagNotFound)
+		assert.ErrorIs(t, err, common.ErrNotFound)
 		assert.Nil(t, user)
 	})
 }
@@ -94,7 +94,7 @@ func TestRepository_Delete(t *testing.T) {
 		assert.NoError(t, err)
 
 		actual, err = sut.GetByID(testUser.ID)
-		assertErrorFlag(t, err, common.FlagNotFound)
+		assert.ErrorIs(t, err, common.ErrNotFound)
 		assert.Nil(t, actual)
 	})
 
@@ -103,7 +103,7 @@ func TestRepository_Delete(t *testing.T) {
 
 		err := sut.Delete(uuid.New())
 
-		assertErrorFlag(t, err, common.FlagNotFound)
+		assert.ErrorIs(t, err, common.ErrNotFound)
 	})
 }
 
@@ -129,7 +129,7 @@ func TestRepository_GetByUsername(t *testing.T) {
 
 		user, err := sut.GetByUsername("not_found")
 
-		assertErrorFlag(t, err, common.FlagNotFound)
+		assert.ErrorIs(t, err, common.ErrNotFound)
 		assert.Nil(t, user)
 	})
 }
@@ -147,13 +147,4 @@ func createTestUser(t *testing.T) *models.User {
 		PasswordHash: passwordHash,
 		Admin:        false,
 	}
-}
-
-//nolint:unparam
-func assertErrorFlag(t *testing.T, err error, expectedFlag common.Flag) {
-	t.Helper()
-
-	flagged := new(common.FlaggedError)
-	assert.ErrorAs(t, err, flagged)
-	assert.Equal(t, expectedFlag, flagged.Flag())
 }
