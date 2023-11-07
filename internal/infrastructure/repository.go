@@ -36,7 +36,7 @@ func (r *Repository) GetByID(id uuid.UUID) (*models.User, error) {
 		return user, nil
 	}
 
-	return nil, common.FlagError(fmt.Errorf("user with id %q not found", id), common.FlagNotFound)
+	return nil, fmt.Errorf("%w: user with id %q not found", common.ErrNotFound, id)
 }
 
 func (r *Repository) GetByUsername(username string) (*models.User, error) {
@@ -58,7 +58,7 @@ func (r *Repository) GetByUsername(username string) (*models.User, error) {
 	})
 
 	if found == nil {
-		return nil, common.FlagError(fmt.Errorf("user with username %q not found", username), common.FlagNotFound)
+		return nil, fmt.Errorf("%w: user with username %q not found", common.ErrNotFound, username)
 	}
 
 	return found, nil

@@ -3,6 +3,7 @@ package transport
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -54,7 +55,7 @@ func (a *Authenticator[UserModel]) BasicAuthUnaryInterceptor(
 	user, err := a.authFn(credentials.username, credentials.password)
 	switch {
 	case err == nil:
-	case common.IsFlaggedError(err, common.FlagNotFound):
+	case errors.Is(err, common.ErrNotFound):
 		return nil, status.Error(codes.Unauthenticated, "Invalid credentials")
 	default:
 		return nil, fmt.Errorf("failed to authenticate user: %w", err)
