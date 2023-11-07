@@ -96,11 +96,7 @@ func (h *GRPCHandlers) GetUserByID(ctx context.Context, request *proto.GetUserRe
 	}
 
 	query, err := usecases.NewGetUserByIDQuery(request.Id)
-	switch {
-	case err == nil:
-	case errors.Is(err, common.ErrInvalidArgument):
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	default:
+	if err != nil {
 		return nil, fmt.Errorf("failed to create GetUserByID query: %w", err)
 	}
 
@@ -138,12 +134,8 @@ func (h *GRPCHandlers) UpdateUser(ctx context.Context, request *proto.UpdateUser
 		request.Password,
 		request.Admin,
 	)
-	switch {
-	case err == nil:
-	case errors.Is(err, common.ErrInvalidArgument):
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	default:
-		return nil, fmt.Errorf("failed to create UpdateUser command: %w", err)
+	if err != nil {
+		return empty, fmt.Errorf("failed to create UpdateUser command: %w", err)
 	}
 
 	err = h.userUseCases.UpdateUser(cmd)
@@ -165,12 +157,8 @@ func (h *GRPCHandlers) DeleteUser(ctx context.Context, request *proto.DeleteUser
 	}
 
 	cmd, err := usecases.NewDeleteUserCommand(request.Id)
-	switch {
-	case err == nil:
-	case errors.Is(err, common.ErrInvalidArgument):
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	default:
-		return nil, fmt.Errorf("failed to create DeleteUser command: %w", err)
+	if err != nil {
+		return empty, fmt.Errorf("failed to create DeleteUser command: %w", err)
 	}
 
 	err = h.userUseCases.DeleteUser(cmd)

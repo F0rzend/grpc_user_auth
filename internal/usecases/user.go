@@ -126,7 +126,7 @@ func NewUpdateUserCommand(
 ) (*UpdateUserCommand, error) {
 	userUUID, err := uuid.Parse(id)
 	if err != nil {
-		return nil, fmt.Errorf("%w: failed to parse id %q: %w", common.ErrInvalidArgument, id, err)
+		return nil, fmt.Errorf("failed to parse id %q: %w", id, err)
 	}
 
 	return &UpdateUserCommand{
@@ -172,7 +172,7 @@ type DeleteUserCommand struct {
 func NewDeleteUserCommand(id string) (*DeleteUserCommand, error) {
 	userUUID, err := uuid.Parse(id)
 	if err != nil {
-		return nil, fmt.Errorf("%w: failed to parse id %q: %w", common.ErrInvalidArgument, id, err)
+		return nil, fmt.Errorf("failed to parse id %q: %w", id, err)
 	}
 
 	return &DeleteUserCommand{
