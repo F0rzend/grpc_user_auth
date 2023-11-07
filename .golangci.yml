@@ -53,6 +53,7 @@ linters:
   - dupl    # Go linter that checks for duplicated code.
   - exhaustruct    # Go linter that checks if all struct fields are initialized.
   - goerr113    # Go linter to check the errors handling expressions.
+  - nolintlint    # Go linter that checks if a file contains `//nolint` comments.
   - varnamelen    # Checks that the length of a variable's name matches its scope
   - wsl    # Whitespace Linter - Forces you to use empty lines!
 
