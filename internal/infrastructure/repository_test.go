@@ -149,6 +149,7 @@ func createTestUser(t *testing.T) *models.User {
 	}
 }
 
+//nolint:unparam
 func assertErrorFlag(t *testing.T, err error, expectedFlag common.Flag) {
 	t.Helper()
 
