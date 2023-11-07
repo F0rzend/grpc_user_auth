@@ -46,19 +46,12 @@ func (h *GRPCHandlers) CreateUser(
 		return nil, err
 	}
 
-	cmd, err := usecases.NewCreateUserCommand(
+	cmd := usecases.NewCreateUserCommand(
 		request.Username,
 		request.Email,
 		request.Password,
 		request.Admin,
 	)
-	switch {
-	case err == nil:
-	case common.IsFlaggedError(err, common.FlagInvalidArgument):
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	default:
-		return nil, fmt.Errorf("failed to create CreateUser command: %w", err)
-	}
 
 	id, err := h.userUseCases.CreateUser(cmd)
 	switch {

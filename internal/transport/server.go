@@ -24,6 +24,7 @@ func NewGRPCServer(
 ) *GRPCServer {
 	server := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(common.GetLoggerInjectionUnaryInterceptor(logger)),
+		grpc.ChainUnaryInterceptor(ValidationUnaryInterceptor),
 		grpc.ChainUnaryInterceptor(ErrorHandlingUnaryInterceptor),
 		grpc.ChainUnaryInterceptor(authenticator.BasicAuthUnaryInterceptor),
 	)

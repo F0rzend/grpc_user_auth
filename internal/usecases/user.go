@@ -1,9 +1,7 @@
 package usecases
 
 import (
-	"errors"
 	"fmt"
-	"net/mail"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -35,21 +33,13 @@ func NewCreateUserCommand(
 	email string,
 	password string,
 	admin bool,
-) (*CreateUserCommand, error) {
-	_, err := mail.ParseAddress(email)
-	if err != nil {
-		return nil, common.FlagError(
-			errors.New("invalid email"),
-			common.FlagInvalidArgument,
-		)
-	}
-
+) *CreateUserCommand {
 	return &CreateUserCommand{
 		username: username,
 		email:    email,
 		password: password,
 		admin:    admin,
-	}, nil
+	}
 }
 
 func (u *UserUseCases) CreateUser(cmd *CreateUserCommand) (uuid.UUID, error) {
@@ -95,10 +85,7 @@ type GetUserByIDQuery struct {
 func NewGetUserByIDQuery(id string) (*GetUserByIDQuery, error) {
 	userUUID, err := uuid.Parse(id)
 	if err != nil {
-		return nil, common.FlagError(
-			fmt.Errorf("failed to parse id %q: %w", id, err),
-			common.FlagInvalidArgument,
-		)
+		return nil, fmt.Errorf("failed to parse id %q: %w", id, err)
 	}
 
 	return &GetUserByIDQuery{
@@ -143,14 +130,6 @@ func NewUpdateUserCommand(
 	if err != nil {
 		return nil, common.FlagError(
 			fmt.Errorf("failed to parse id %q: %w", id, err),
-			common.FlagInvalidArgument,
-		)
-	}
-
-	_, err = mail.ParseAddress(email)
-	if err != nil {
-		return nil, common.FlagError(
-			errors.New("invalid email"),
 			common.FlagInvalidArgument,
 		)
 	}
